@@ -29,6 +29,11 @@ _MESSAGES_REQUEST_FIELDS = (
 def dump_messages_request(request: MessagesRequest) -> dict[str, Any]:
     """Return JSON-ready public Messages fields without FCC routing state."""
     raw = request.model_dump(exclude_none=True)
+    if "messages" in raw and isinstance(raw["messages"], list):
+        for msg in raw["messages"]:
+            # inline system msgs from claude code CLI need role='user' for api wire compliance
+            if isinstance(msg, dict) and msg.get("role") == "system":
+                msg["role"] = "user"
     return {
         field: raw[field]
         for field in _MESSAGES_REQUEST_FIELDS

@@ -102,3 +102,23 @@ def test_server_tool_history_remains_valid_anthropic_input() -> None:
     assert isinstance(blocks, list)
     assert isinstance(blocks[0], ContentBlockServerToolUse)
     assert isinstance(blocks[1], ContentBlockWebSearchToolResult)
+
+
+def test_dump_messages_request_normalizes_inline_system_role() -> None:
+    request = MessagesRequest.model_validate(
+        {
+            "model": "claude-3-5-sonnet",
+            "messages": [
+                {"role": "user", "content": "hello"},
+                {"role": "system", "content": "inline system instruction"},
+                {"role": "user", "content": "do something"},
+            ],
+        }
+    )
+
+    body = dump_messages_request(request)
+
+    assert body["messages"][0]["role"] == "user"
+    assert body["messages"][1]["role"] == "user"
+    assert body["messages"][1]["content"] == "inline system instruction"
+    assert body["messages"][2]["role"] == "user"
